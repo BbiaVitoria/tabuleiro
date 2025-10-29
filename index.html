@@ -3,53 +3,410 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Memória</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <title>Jogo da Memória - Desafio Interativo</title>
+    <!-- Carrega a biblioteca Tailwind CSS para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --card-size: 100px; /* Tamanho padrão para desktop */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Cor de fundo suave */
+        }
+        .container {
+            min-height: 100vh;
+        }
 
-    <div id="menu-screen">
-        <h1>🎮 Jogo da Memória</h1>
+        /* Estilos do Cartão para o efeito Flip */
+        .card {
+            height: var(--card-size);
+            width: var(--card-size);
+            perspective: 1000px;
+            cursor: pointer;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .card.flipped .card-inner, 
+        .card.matched .card-inner {
+            transform: rotateY(180deg);
+        }
         
-        <div class="selection-group">
-            <label for="difficulty">Nível de Dificuldade:</label>
-            <select id="difficulty">
-                <option value="4">Fácil (4x4)</option>
-                <option value="6">Normal (6x6)</option>
-                <option value="8">Difícil (8x8)</option>
-            </select>
-        </div>
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem; /* text-4xl */
+            font-weight: 800;
+        }
+        .card-front {
+            background-color: #ffffff; /* Fundo branco para o ícone */
+            color: #1f2937; /* Cor do texto do ícone */
+            transform: rotateY(180deg);
+            border: 4px solid #3b82f6; /* Borda azul */
+        }
+        .card-back {
+            background-color: #3b82f6; /* Azul primário */
+            color: #ffffff;
+            font-size: 1.5rem; /* text-2xl */
+            transform: rotateY(0deg);
+            border: 4px solid #2563eb; /* Borda azul escura */
+        }
+        .card-back:after {
+            content: '?';
+        }
+        
+        /* Efeito para cartas combinadas */
+        .card.matched {
+            pointer-events: none; /* Não pode ser clicada */
+        }
+        .card.matched .card-front {
+            border-color: #10b981; /* Borda verde */
+        }
 
-        <div class="selection-group">
-            <label for="theme">Tema das Cartas:</label>
-            <select id="theme">
-                <option value="disney">Personagens da Disney</option>
-                <option value="animals">Animais</option>
-                <option value="pokemon">Pokémon</option>
-                <option value="fruits">Frutas</option>
-                <option value="food">Comidas</option>
-            </select>
-        </div>
+        /* Responsividade para grades grandes (mobile) */
+        @media (max-width: 640px) {
+            .card {
+                height: 60px;
+                width: 60px;
+            }
+            .card-front {
+                font-size: 1.5rem;
+            }
+        }
+        @media (max-width: 450px) {
+            .card {
+                height: 50px;
+                width: 50px;
+            }
+            .card-front {
+                font-size: 1.25rem;
+            }
+        }
 
-        <button id="startGameButton">Iniciar Jogo</button>
-    </div>
+    </style>
+</head>
+<body class="bg-gray-100 antialiased">
 
-    <div id="game-screen" class="hidden">
-        <div class="game-info">
-            <p>Movimentos: <span id="moves-counter">0</span></p>
-            <p>Tempo: <span id="timer">00:00</span></p>
-        </div>
-        <div id="game-board">
+    <!-- Container Principal Centrado -->
+    <div id="app-container" class="container flex flex-col items-center justify-center p-4">
+
+        <!-- 1. Tela Inicial (Menu Principal) -->
+        <section id="menu-screen" class="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl transition duration-500 transform">
+            <h1 class="text-4xl font-extrabold text-center text-blue-600 mb-6">Jogo da Memória</h1>
+            
+            <div class="space-y-6">
+                
+                <!-- Seletor de Dificuldade -->
+                <div>
+                    <label for="difficulty" class="block text-lg font-medium text-gray-700 mb-2">Nível de Dificuldade:</label>
+                    <select id="difficulty" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <option value="4">Fácil ($4 \times 4$ - 16 Cartas)</option>
+                        <option value="6">Normal ($6 \times 6$ - 36 Cartas)</option>
+                        <option value="8">Difícil ($8 \times 8$ - 64 Cartas)</option>
+                    </select>
+                </div>
+
+                <!-- Seletor de Tema -->
+                <div>
+                    <label for="theme" class="block text-lg font-medium text-gray-700 mb-2">Tema das Cartas:</label>
+                    <select id="theme" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <option value="disney">Personagens (Disney & Cia)</option>
+                        <option value="animals">Animais</option>
+                        <option value="pokemon">Símbolos Pokémon</option>
+                        <option value="fruits">Frutas & Vegetais</option>
+                        <option value="food">Comidas</option>
+                    </select>
+                </div>
+
+                <!-- Botão Iniciar Jogo -->
+                <button id="startGameButton" class="w-full py-4 text-xl font-bold text-white bg-green-500 rounded-xl shadow-lg hover:bg-green-600 transition duration-200 transform hover:scale-[1.02]">
+                    Iniciar Jogo
+                </button>
             </div>
+        </section>
+
+        <!-- 2. Tela do Jogo -->
+        <section id="game-screen" class="w-full max-w-4xl p-4 bg-white rounded-xl shadow-2xl hidden transition duration-500">
+            
+            <!-- Painel de Status -->
+            <div class="flex justify-between items-center bg-blue-100 p-4 rounded-lg mb-4 shadow-inner">
+                <div class="text-center">
+                    <span class="block text-sm font-semibold text-blue-700">Movimentos</span>
+                    <span id="moves-counter" class="block text-2xl font-bold text-gray-800">0</span>
+                </div>
+                <div class="text-center">
+                    <span class="block text-sm font-semibold text-blue-700">Tempo</span>
+                    <span id="timer" class="block text-2xl font-bold text-gray-800">00:00</span>
+                </div>
+            </div>
+
+            <!-- Grade do Jogo -->
+            <div id="game-board" class="grid gap-2 sm:gap-3 justify-center">
+                <!-- Cartas serão injetadas aqui pelo JavaScript -->
+            </div>
+
+        </section>
+
+        <!-- 3. Tela de Fim de Jogo -->
+        <section id="end-screen" class="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl hidden transition duration-500 transform">
+            <h2 class="text-4xl font-extrabold text-center text-green-600 mb-6">🎉 Parabéns! Você Venceu!</h2>
+            
+            <div class="text-center space-y-4 mb-8">
+                <p class="text-xl text-gray-700">Sua Performance:</p>
+                <div class="flex justify-around">
+                    <div class="bg-blue-100 p-4 rounded-lg shadow">
+                        <span class="block text-sm font-semibold text-blue-700">Tempo Total</span>
+                        <span id="final-time" class="block text-3xl font-extrabold text-gray-800"></span>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-lg shadow">
+                        <span class="block text-sm font-semibold text-blue-700">Movimentos</span>
+                        <span id="final-moves" class="block text-3xl font-extrabold text-gray-800"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="restartGameButton" class="w-full py-3 text-lg font-bold text-white bg-blue-500 rounded-xl shadow-lg hover:bg-blue-600 transition duration-200 transform hover:scale-[1.02]">
+                Jogar Novamente
+            </button>
+        </section>
+
     </div>
 
-    <div id="end-screen" class="hidden">
-        <h2>🎉 Parabéns! Você Venceu!</h2>
-        <p>Você completou o jogo em <strong id="final-time"></strong></p>
-        <p>Com um total de <strong id="final-moves"></strong> movimentos.</p>
-        <button id="restartGameButton">Jogar Novamente</button>
-    </div>
+    <script>
+        // Todo o código JavaScript é envolvido neste listener.
+        // ISSO GARANTE que o código só é executado DEPOIS que todo o HTML (incluindo o botão 'startGameButton') é carregado,
+        // corrigindo o erro de 'botão não funciona'.
+        document.addEventListener('DOMContentLoaded', () => {
 
-    <script src="script.js"></script>
+            // --- 1. Elementos do DOM (Verificação Crucial) ---
+            const menuScreen = document.getElementById('menu-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const endScreen = document.getElementById('end-screen');
+            const startGameButton = document.getElementById('startGameButton'); // ID CRÍTICO
+            const restartGameButton = document.getElementById('restartGameButton');
+            const gameBoard = document.getElementById('game-board');
+            const difficultySelect = document.getElementById('difficulty');
+            const themeSelect = document.getElementById('theme');
+            const movesCounter = document.getElementById('moves-counter');
+            const timerDisplay = document.getElementById('timer');
+            const finalTimeDisplay = document.getElementById('final-time');
+            const finalMovesDisplay = document.getElementById('final-moves');
+
+            // --- 2. Variáveis Globais de Estado do Jogo ---
+            let difficulty = 4; // 4x4 padrão
+            let theme = 'disney';
+            let cardsArray = [];
+            let cardsFlipped = [];
+            let matchedPairs = 0;
+            let totalPairs = 0;
+            let moves = 0;
+            let timerInterval;
+            let startTime;
+            let lockBoard = false; 
+
+            // --- 3. Definição de Ícones/Valores (Usando Emojis) ---
+            const ICON_MAP = {
+                disney: ['🐭', '❄️', '🦁', '🧜‍♀️', '👑', '🐘', '🧞‍♂️', '🐻', '🐶', '🐈', '🐝', '🦊', '🐸', '🦉', '🦄', '🐲', '🐞', '🦆', '🦢', '🦩', '🦒', '🦓', '🐒', '🦋', '🐢', '🦖', '🦈', '🐳', '🦀', '🦂', '🕸️', '🕷️'],
+                animals: ['🦁', '🐘', '🐬', '🐒', '🦒', '🐅', '🦓', '🐼', '🐻', '🐺', '🦊', '🐱', '🐶', '🐰', '🐭', '🐸', '🦉', '🦅', '🦆', '🦋', '🐝', '🐜', '🐞', '🐠', '🐳', '🦈', '🐙', '🦀', '🐍', '🐢', '🐊', '🦎'],
+                pokemon: ['⚡', '🔥', '🌱', '💧', '✨', '💀', '🎈', '👻', '🍦', '🍩', '🍔', '🍟', '🍕', '🍣', '🍤', '🍜', '🍚', '🍙', '🍘', '🍠', '🍢', '🍡', '🍧', '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍒'],
+                fruits: ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍒', '🍍', '🥝', '🥑', '🥥', '🥭', '🍑', '🫐', '🍈', '🍏', '🍅', '🍆', '🍠', '🧅', '🥦', '🥕', '🥔', '🌽'],
+                food: ['🍕', '🍔', '🍟', '🍣', '🍩', '🍦', '🍜', '🌮', '🥪', '🍳', '🥓', '🍗', '🍖', '🍤', '🍚', '🍞', '🍰', '🍪', '🍫', '🍬', '☕', '🥤', '🍺', '🍷', '🍶', '🍼', '🥛', '🍯', '🧂', '🌶️', '🍄', '🥒']
+            };
+
+            // --- 4. Funções Auxiliares ---
+
+            // Função para embaralhar um array (Algoritmo Fisher-Yates)
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            // Função para formatar o tempo em MM:SS
+            function formatTime(totalSeconds) {
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+
+            // --- 5. Lógica de Jogo ---
+
+            // Função chamada ao clicar em "Iniciar Jogo"
+            function initializeGame() {
+                // 1. Configurar variáveis baseadas na seleção do usuário
+                difficulty = parseInt(difficultySelect.value);
+                theme = themeSelect.value;
+                const gridSize = difficulty * difficulty; // 16, 36 ou 64
+                totalPairs = gridSize / 2;
+
+                moves = 0;
+                matchedPairs = 0;
+                cardsFlipped = [];
+                lockBoard = false;
+                movesCounter.textContent = moves;
+
+                // 2. Gerar pares de cartas e embaralhar
+                const availableIcons = ICON_MAP[theme].slice(0, totalPairs);
+                cardsArray = [...availableIcons, ...availableIcons]; 
+                shuffle(cardsArray);
+
+                // 3. Configurar a grade CSS e tamanho das cartas (Responsividade)
+                gameBoard.style.gridTemplateColumns = `repeat(${difficulty}, 1fr)`;
+                
+                // Ajusta o tamanho da carta com base no tamanho da grade (para caber na tela)
+                const cardSize = difficulty === 8 ? '50px' : (difficulty === 6 ? '70px' : '100px');
+                document.documentElement.style.setProperty('--card-size', cardSize);
+                
+                // 4. Injetar HTML das cartas
+                gameBoard.innerHTML = ''; 
+                cardsArray.forEach((value, index) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.classList.add('card');
+                    cardElement.dataset.value = value;
+                    cardElement.dataset.index = index;
+                    cardElement.innerHTML = `
+                        <div class="card-inner">
+                            <div class="card-front">${value}</div>
+                            <div class="card-back"></div>
+                        </div>
+                    `;
+                    cardElement.addEventListener('click', flipCard);
+                    gameBoard.appendChild(cardElement);
+                });
+
+                // 5. Iniciar Timer
+                clearInterval(timerInterval);
+                startTime = Date.now();
+                timerDisplay.textContent = '00:00';
+                timerInterval = setInterval(updateTimer, 1000);
+
+                // 6. Transição de tela: Menu -> Jogo
+                menuScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+            }
+
+            function updateTimer() {
+                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                timerDisplay.textContent = formatTime(elapsedSeconds);
+            }
+
+            function flipCard(event) {
+                const clickedCard = event.currentTarget;
+
+                // Bloqueia cliques se:
+                // a) O tabuleiro estiver bloqueado (virando cartas).
+                // b) A carta já estiver combinada.
+                // c) A carta já estiver virada (e for a primeira carta do par).
+                if (lockBoard || clickedCard.classList.contains('matched') || clickedCard.classList.contains('flipped')) {
+                    return;
+                }
+
+                // Vira a carta
+                clickedCard.classList.add('flipped');
+                cardsFlipped.push(clickedCard);
+
+                // Se duas cartas foram viradas, verifica se há correspondência
+                if (cardsFlipped.length === 2) {
+                    moves++;
+                    movesCounter.textContent = moves;
+                    lockBoard = true; // Bloqueia o tabuleiro para evitar 3 cliques
+                    
+                    checkForMatch();
+                }
+            }
+
+            function checkForMatch() {
+                const [card1, card2] = cardsFlipped;
+                const isMatch = card1.dataset.value === card2.dataset.value;
+
+                isMatch ? disableCards() : unflipCards();
+            }
+
+            function disableCards() {
+                // Remove o evento de clique e adiciona a classe 'matched'
+                cardsFlipped.forEach(card => {
+                    card.classList.add('matched');
+                    card.removeEventListener('click', flipCard); 
+                });
+                
+                matchedPairs++;
+                resetBoard();
+                
+                // Verifica condição de vitória
+                if (matchedPairs === totalPairs) {
+                    endGame();
+                }
+            }
+
+            function unflipCards() {
+                // Vira as cartas para baixo após 1 segundo
+                setTimeout(() => {
+                    cardsFlipped.forEach(card => card.classList.remove('flipped'));
+                    resetBoard();
+                }, 1000); 
+            }
+
+            function resetBoard() {
+                cardsFlipped = [];
+                lockBoard = false;
+            }
+
+            function endGame() {
+                clearInterval(timerInterval);
+                
+                const finalTime = timerDisplay.textContent;
+
+                // Atualiza a tela final
+                finalTimeDisplay.textContent = finalTime;
+                finalMovesDisplay.textContent = moves;
+
+                // Transição de tela: Jogo -> Fim de Jogo
+                gameScreen.classList.add('hidden');
+                endScreen.classList.remove('hidden');
+            }
+
+
+            // --- 6. Event Listeners Principais (Ponto de Correção) ---
+
+            // Listener para o botão 'Iniciar Jogo'
+            if (startGameButton) {
+                startGameButton.addEventListener('click', initializeGame);
+            } else {
+                console.error("ERRO CRÍTICO: O botão 'startGameButton' não foi encontrado. Verifique o ID no HTML.");
+            }
+            
+            // Listener para o botão 'Jogar Novamente'
+            if (restartGameButton) {
+                restartGameButton.addEventListener('click', () => {
+                    // Transição de tela: Fim de Jogo -> Menu
+                    endScreen.classList.add('hidden');
+                    menuScreen.classList.remove('hidden');
+                });
+            }
+
+
+            // Garante que apenas o menu inicial está visível ao carregar
+            gameScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            
+        });
+    </script>
 </body>
 </html>
