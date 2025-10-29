@@ -1,21 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link rel="styleshoot" href="style.css">
-    <script src="sript.js" defer></script>
-
-    <title>Mario Jump</title>
+    <title>Jogo da Memória</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="game-board">
+    <div id="menu-screen">
+        <h1>🎮 Jogo da Memória</h1>
+        
+        <div class="selection-group">
+            <label for="difficulty">Nível de Dificuldade:</label>
+            <select id="difficulty">
+                <option value="4">Fácil (4x4)</option>
+                <option value="6">Normal (6x6)</option>
+                <option value="8">Difícil (8x8)</option>
+            </select>
+        </div>
 
-        <img src="pipe.png" class="pipe">
-        <img src="mario.gif" class="mario">
+        <div class="selection-group">
+            <label for="theme">Tema das Cartas:</label>
+            <select id="theme">
+                <option value="disney">Personagens da Disney</option>
+                <option value="animals">Animais</option>
+                <option value="pokemon">Pokémon</option>
+                <option value="fruits">Frutas</option>
+                <option value="food">Comidas</option>
+            </select>
+        </div>
+
+        <button id="startGameButton">Iniciar Jogo</button>
     </div>
 
+    <div id="game-screen" class="hidden">
+        <div class="game-info">
+            <p>Movimentos: <span id="moves-counter">0</span></p>
+            <p>Tempo: <span id="timer">00:00</span></p>
+        </div>
+        <div id="game-board">
+            </div>
+    </div>
+
+    <div id="end-screen" class="hidden">
+        <h2>🎉 Parabéns! Você Venceu!</h2>
+        <p>Você completou o jogo em <strong id="final-time"></strong></p>
+        <p>Com um total de <strong id="final-moves"></strong> movimentos.</p>
+        <button id="restartGameButton">Jogar Novamente</button>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
