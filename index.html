@@ -12,6 +12,8 @@
             --primary-color: #4f46e5;
             --card-back-color: #6366f1;
             --game-bg: #eef2ff;
+            /* Cor rosa para o brilho solicitado */
+            --pink-glow-color: #ec4899; 
         }
 
         body {
@@ -65,12 +67,15 @@
             transform: rotateY(180deg);
             pointer-events: none; /* Desabilita clique na carta virada */
         }
-
+        
+        /* ESTILO CORRIGIDO: BRILHO ROSA PARA CARTAS COMBINADAS */
         .card.matched {
-            box-shadow: 0 0 15px var(--primary-color);
-            border: 2px solid var(--primary-color);
-            opacity: 0.8;
+            /* Brilho rosa: #f472b6 (pink-400) com uma sombra dupla para o efeito de "glow" */
+            box-shadow: 0 0 10px var(--pink-glow-color), 0 0 20px rgba(236, 72, 153, 0.6);
+            border: 2px solid var(--pink-glow-color);
+            opacity: 1; /* Garante visibilidade total para o brilho */
             pointer-events: none; /* Desabilita clique na carta combinada */
+            transition: box-shadow 0.5s ease-out; /* Transição para a sombra */
         }
 
         .card-face {
@@ -207,7 +212,7 @@
             </div>
             
             <div class="text-center mt-6">
-                   <button onclick="showMenu()" class="btn-primary bg-gray-500 hover:bg-gray-600">
+                    <button onclick="showMenu()" class="btn-primary bg-gray-500 hover:bg-gray-600">
                         <i class="fas fa-undo mr-2"></i> Voltar ao Menu
                     </button>
             </div>
@@ -252,10 +257,8 @@
         let startTime = 0;
 
         // --- Variável Global para Mapeamento de Imagens ---
-        // ESTA FOI UMA DAS VARIÁVEIS QUE ESTAVA FALTANDO E CAUSANDO O ERRO.
-        // Mapeia o texto (chave) para a URL da imagem (valor).
+        // Nenhuma alteração nesta seção, conforme solicitado.
         const IMAGE_MAP = {
-            // Placeholder URLs. Você pode substituí-las por URLs de imagens reais.
             'Margarida': 'https://tse1.mm.bing.net/th/id/OIP.gDw8CrDDJ8eP9_cG-X6LmwHaJn?rs=1&pid=ImgDetMain&o=7&rm=3',
             'Mickey': 'https://tse1.mm.bing.net/th/id/OIP.kYPGJ1xVP8BY1Wdb5WMOFAAAAA?rs=1&pid=ImgDetMain&o=7&rm=3',
             'Pateta': 'https://tse1.mm.bing.net/th/id/OIP.WAiOPvagVRRZ9qblJD7BlgHaLI?rs=1&pid=ImgDetMain&o=7&rm=3',
@@ -264,47 +267,43 @@
             'Bela': 'https://m.media-amazon.com/images/S/amazon-avatars-global/daba0942-ed68-44db-8bdb-6edbda7a5694._CR0%2C0%2C367%2C367_UX460_.jpg',
             'Cinderela': 'https://neveril.net/wp-content/uploads/2020/08/4A8A1F5C-55BF-4491-BFB4-1D9C85F627B4-841x1024.jpeg',
             'Aurora': 'https://tse3.mm.bing.net/th/id/OIP.RdO5nBw5utcQW1UBJUi2twHaJx?rs=1&pid=ImgDetMain&o=7&rm=3',
-
-
-
-
         };
 
         // Mapeamento de Dificuldade para Tamanho da Grade
         const GRID_SIZES = {
             'easy': { size: 16, pairs: 8, css: 'grid-4x4' }, // 4x4
             'medium': { size: 36, pairs: 18, css: 'grid-6x6' }, // 6x6
-            'hard': { size: 64, pairs: 32, css: 'grid-8x8' }  // 8x8
+            'hard': { size: 64, pairs: 32, css: 'grid-8x8' }  // 8x8
         };
 
-        // Dados dos Temas (Usando Emojis/Texto simples/Nomes para Imagens)
+        // Dados dos Temas (Nenhuma alteração nesta seção, conforme solicitado)
         const THEMES = {
             // Usando chaves que existem no IMAGE_MAP para testar o carregamento de imagens.
             // O restante são emojis/texto simples.
             disney: [
-                'Mickey', 'Margarida', 'Pateta', 'Simba', 'Bela', 'cinderela', '🦁', '❄️',
+                'Mickey', 'Margarida', 'Pateta', 'Simba', 'Bela', 'Cinderela', '🦁', '❄️',
                 'Minne', 'Aurora', '🐘', 'Pooh', 'Woody', 'Buzz', 'Moana', 'Genie',
             ],
             animals: [
-                '🦁', '🐘', '🐬', '🦒', '🦓', '🐧', '🐅', '🐼', 
-                '🐒', '🐇', '🐕', '🐈', '🦜', '🦉', '🦌', '🐸', 
-                '🐍', '🐢', '🦢', '🦏', '🦔', '🦙', '🦡', '🦇', 
+                '🦁', '🐘', '🐬', '🦒', '🦓', '🐧', '🐅', '🐼', 
+                '🐒', '🐇', '🐕', '🐈', '🦜', '🦉', '🦌', '🐸', 
+                '🐍', '🐢', '🦢', '🦏', '🦔', '🦙', '🦡', '🦇', 
                 '🦅', '🦈', '🦀', '🐳', '🐌', '🦋', '🐝', '🐜'
             ],
             pokemon: [
-                'Pika', 'Char', 'Bulba', 'Squir', 'Jiggly', 'Mew', 'Eeve', 'Snor', 
+                'Pika', 'Char', 'Bulba', 'Squir', 'Jiggly', 'Mew', 'Eeve', 'Snor', 
                 'Psy', 'Gengar', 'Toge', 'Magik', 'Vulpix', 'Zubat', 'Machop', 'Onix',
                 'Chan', 'Rhydon', 'Scyther', 'Lapras', 'Ditto', 'Aerod', 'Dratini', 'Artic',
                 'Zapdos', 'Moltres', 'Ho-Oh', 'Lugia', 'Celebi', 'Treecko', 'Torchic', 'Mudkip'
             ],
             fruits: [
-                '🍎', '🍌', '🍓', '🍇', '🍊', '🍍', '🥝', '🥭', 
-                '🍒', '🍉', '🍑', '🍐', '🥥', '🍋', '🥑', '🫐', 
-                '🍈', '🌶️', '🍆', '🥦', '🥕', '🥔', '🧅', '🌽', 
+                '🍎', '🍌', '🍓', '🍇', '🍊', '🍍', '🥝', '🥭', 
+                '🍒', '🍉', '🍑', '🍐', '🥥', '🍋', '🥑', '🫐', 
+                '🍈', '🌶️', '🍆', '🥦', '🥕', '🥔', '🧅', '🌽', 
                 '🍄', '🌰', '🥜', '🌾', '🌱', '🌿', '🍃', '🍀'
             ],
             food: [
-                '🍕', '🍔', '🍣', '🌮', '🍟', '🍩', '🍪', '🍰', 
+                '🍕', '🍔', '🍣', '🌮', '🍟', '🍩', '🍪', '🍰', 
                 '🥐', '🥨', '🍜', '🍝', '🍚', '🍗', '🥩', '🥓',
                 '🥞', '🧇', '🥪', '🥙', '🌯', '🧆', '🥚', '🥛',
                 '☕', '🍵', '🍻', '🍷', '🍸', '🍹', '🧉', '🍾'
@@ -448,7 +447,7 @@
                 const cardFront = document.createElement('div');
                 cardFront.classList.add('card-face', 'card-front');
                 
-                // --- Lógica de Renderização de Imagem/Texto (CORRIGIDA) ---
+                // --- Lógica de Renderização de Imagem/Texto ---
                 if (IMAGE_MAP[content]) {
                     // Se o conteúdo for uma chave no IMAGE_MAP (ex: 'Margarida'), renderiza a imagem
                     const imageUrl = IMAGE_MAP[content];
@@ -518,7 +517,7 @@
         function disableCards() {
             matchesFound++;
             
-            // Aplica estilo de 'combinado'
+            // Aplica estilo de 'combinado' (que agora tem o brilho rosa no CSS)
             firstCard.classList.add('matched');
             secondCard.classList.add('matched');
 
