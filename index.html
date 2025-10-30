@@ -175,7 +175,7 @@
                 <div>
                     <label for="theme" class="block text-lg font-semibold text-gray-700 mb-2">Tema das Cartas:</label>
                     <select id="theme" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
-                        <option value="disney">Personagens (Disney)</option>
+                        <option value="disney">Personagens (Disney) - Inclui Imagens!</option>
                         <option value="animals" selected>Animais</option>
                         <option value="pokemon">Pokémon</option>
                         <option value="fruits">Frutas</option>
@@ -207,9 +207,9 @@
             </div>
             
             <div class="text-center mt-6">
-                 <button onclick="showMenu()" class="btn-primary bg-gray-500 hover:bg-gray-600">
-                    <i class="fas fa-undo mr-2"></i> Voltar ao Menu
-                </button>
+                   <button onclick="showMenu()" class="btn-primary bg-gray-500 hover:bg-gray-600">
+                        <i class="fas fa-undo mr-2"></i> Voltar ao Menu
+                    </button>
             </div>
         </div>
     </div>
@@ -251,6 +251,18 @@
         let timerInterval = null;
         let startTime = 0;
 
+        // --- Variável Global para Mapeamento de Imagens ---
+        // ESTA FOI UMA DAS VARIÁVEIS QUE ESTAVA FALTANDO E CAUSANDO O ERRO.
+        // Mapeia o texto (chave) para a URL da imagem (valor).
+        const IMAGE_MAP = {
+            // Placeholder URLs. Você pode substituí-las por URLs de imagens reais.
+            'Margarida': 'https://tse1.mm.bing.net/th/id/OIP.gDw8CrDDJ8eP9_cG-X6LmwHaJn?rs=1&pid=ImgDetMain&o=7&rm=3',
+            'Mickey': 'https://placehold.co/100x100/000000/ffffff?text=Mickey',
+            'Elsa': 'https://placehold.co/100x100/3498db/ffffff?text=Elsa',
+            'Simba': 'https://placehold.co/100x100/ff7f50/ffffff?text=Simba',
+            'Ariel': 'https://placehold.co/100x100/6A5ACD/ffffff?text=Ariel',
+        };
+
         // Mapeamento de Dificuldade para Tamanho da Grade
         const GRID_SIZES = {
             'easy': { size: 16, pairs: 8, css: 'grid-4x4' }, // 4x4
@@ -258,12 +270,13 @@
             'hard': { size: 64, pairs: 32, css: 'grid-8x8' }  // 8x8
         };
 
-        // Dados dos Temas (Usando Emojis/SVGs como Conteúdo)
-        // DICA: O usuário pode facilmente substituir por URLs de imagens aqui!
+        // Dados dos Temas (Usando Emojis/Texto simples/Nomes para Imagens)
         const THEMES = {
+            // Usando chaves que existem no IMAGE_MAP para testar o carregamento de imagens.
+            // O restante são emojis/texto simples.
             disney: [
-                '🐭', '👑', '🦁', '❄️', '🧜‍♀️', '🐻', '🕰️', '🐘', // Exemplo Emojis Disney
-                'Ariel', 'Elsa', 'Simba', 'Margarida', 'Moana', 'Woody', 'Buzz', 'Pooh'
+                'Mickey', 'Margarida', 'Elsa', 'Simba', 'Ariel', '👑', '🦁', '❄️',
+                '🐻', '🕰️', '🐘', 'Pooh', 'Woody', 'Buzz', 'Moana', 'Genie',
             ],
             animals: [
                 '🦁', '🐘', '🐬', '🦒', '🦓', '🐧', '🐅', '🐼', 
@@ -428,25 +441,17 @@
                 const cardFront = document.createElement('div');
                 cardFront.classList.add('card-face', 'card-front');
                 
-                // --- INSTRUÇÕES PARA IMAGENS (SOLICITAÇÃO DO USUÁRIO) ---
-                /*
-                Se o usuário quiser usar imagens, ele pode substituir a linha abaixo (cardFront.textContent = content)
-                pelo seguinte bloco de código. Ele precisaria ter um objeto de mapeamento
-                (ex: IMAGE_MAP['Mickey'] = 'url-da-imagem-mickey.png').
-                
-                const cardContent = themeContent[index]; // Ou use um mapeamento de URL
-                
-                if (content.startsWith('http') || content.endsWith('.png') || content.endsWith('.jpg')) {
-                    // Se o conteúdo for uma URL de imagem
-                    cardFront.innerHTML = `<img src="${content}" alt="Carta ${index}" class="rounded-lg object-contain">`;
+                // --- Lógica de Renderização de Imagem/Texto (CORRIGIDA) ---
+                if (IMAGE_MAP[content]) {
+                    // Se o conteúdo for uma chave no IMAGE_MAP (ex: 'Margarida'), renderiza a imagem
+                    const imageUrl = IMAGE_MAP[content];
+                    // Usa a tag <img> com um fallback 'onerror' para o caso de a imagem falhar ao carregar.
+                    cardFront.innerHTML = `<img src="${imageUrl}" alt="${content}" class="rounded-lg object-contain" onerror="this.onerror=null; this.src='https://placehold.co/100x100/cc0000/ffffff?text=Erro'">`;
                 } else {
-                    // Mantém emojis/texto
+                    // Se for um emoji ou texto simples (ex: '🦁'), usa textContent
                     cardFront.textContent = content;
                 }
-                */
-                // Usando Emojis/Texto simples por padrão:
-                IMAGE_MAP['Margarida'] = 'https://tse1.mm.bing.net/th/id/OIP.gDw8CrDDJ8eP9_cG-X6LmwHaJn?rs=1&pid=ImgDetMain&o=7&rm=3');
-                // --- FIM DAS INSTRUÇÕES PARA IMAGENS ---
+                // --- FIM da Lógica de Renderização ---
 
 
                 card.appendChild(cardBack);
